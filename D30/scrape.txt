@@ -1,0 +1,316 @@
+python -m venv venv
+venv\Scripts\activate
+source venv/bin/activate
+
+pip install requests beautifulsoup4 pandas lxml
+
+
+Important note first:
+
+books.toscrape.com is a demo website designed for scraping practice.
+It does not actually contain customer reviews/comments, usernames, or review tags.
+It mainly contains:
+Book title
+Price
+Stock availability
+Star rating
+Product description
+Category
+
+So if you specifically want:
+
+real-time comments
+customer names
+review tags
+
+you’ll need a different website/API.
+
+Still, I’ll show you:
+
+How to scrape everything available from Books to Scrape
+How to structure it like a real review scraper
+How to extend it later to Amazon/Goodreads/etc.
+1. Install Required Libraries
+
+Create a project folder:
+
+mkdir book_scraper
+cd book_scraper
+
+Create virtual environment:
+
+python -m venv venv
+
+Activate it:
+
+Windows
+venv\Scripts\activate
+Mac/Linux
+source venv/bin/activate
+
+Install packages:
+
+pip install requests beautifulsoup4 pandas lxml
+2. Understand Website Structure
+
+Open:
+
+Books to Scrape Catalog
+
+Inspect elements in browser:
+
+Right click → Inspect
+
+You’ll notice:
+
+Each book is inside article.product_pod
+Ratings are inside:
+p.star-rating
+Book links:
+h3 > a
+3. Create Basic Scraper File
+
+Create:
+
+touch scraper.py
+
+Add imports:
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+4. Fetch Webpage HTML
+
+Add this:
+
+url = "https://books.toscrape.com/catalogue/category/books_1/index.html"
+
+response = requests.get(url)
+
+print(response.status_code)
+
+Expected output:
+
+200
+5. Parse HTML
+
+Add:
+
+soup = BeautifulSoup(response.text, "lxml")
+
+Find all books:
+
+books = soup.find_all("article", class_="product_pod")
+
+print(len(books))
+6. Extract Book Data
+
+Now loop through books.
+
+Replace your code with:
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+url = "https://books.toscrape.com/catalogue/category/books_1/index.html"
+
+response = requests.get(url)
+
+soup = BeautifulSoup(response.text, "lxml")
+
+books = soup.find_all("article", class_="product_pod")
+
+data = []
+
+for book in books:
+
+    title = book.h3.a["title"]
+
+    price = book.find("p", class_="price_color").text
+
+    availability = book.find("p", class_="instock availability").text.strip()
+
+    rating = book.find("p")["class"][1]
+
+    data.append({
+        "title": title,
+        "price": price,
+        "availability": availability,
+        "rating": rating
+    })
+
+df = pd.DataFrame(data)
+
+print(df.head())
+7. Save Data to CSV
+
+Add:
+
+df.to_csv("books.csv", index=False)
+
+print("Data saved!")
+
+Run:
+
+python scraper.py
+8. Scrape Product Description
+
+Each book has its own page.
+
+You need to:
+
+Open each book link
+Visit detail page
+Extract description
+
+Update loop:
+
+base_url = "https://books.toscrape.com/catalogue/"
+
+for book in books:
+
+    title = book.h3.a["title"]
+
+    relative_link = book.h3.a["href"]
+
+    product_url = base_url + relative_link
+
+    product_response = requests.get(product_url)
+
+    product_soup = BeautifulSoup(product_response.text, "lxml")
+
+    description = product_soup.find(
+        "meta",
+        attrs={"name": "description"}
+    )["content"].strip()
+
+    print(title)
+    print(description)
+9. Convert Star Ratings to Numbers
+
+Website stores ratings as text:
+
+One
+Two
+Three
+Four
+Five
+
+Create mapper:
+
+rating_map = {
+    "One": 1,
+    "Two": 2,
+    "Three": 3,
+    "Four": 4,
+    "Five": 5
+}
+
+Use:
+
+rating_text = book.find("p")["class"][1]
+
+rating = rating_map[rating_text]
+10. Add Pagination Support
+
+Books span multiple pages.
+
+Example:
+
+page-1.html
+page-2.html
+
+Loop through pages:
+
+all_data = []
+
+for page in range(1, 6):
+
+    url = f"https://books.toscrape.com/catalogue/page-{page}.html"
+
+    response = requests.get(url)
+
+    soup = BeautifulSoup(response.text, "lxml")
+
+    books = soup.find_all("article", class_="product_pod")
+
+    for book in books:
+
+        title = book.h3.a["title"]
+
+        rating = book.find("p")["class"][1]
+
+        all_data.append({
+            "title": title,
+            "rating": rating
+        })
+
+print(all_data)
+11. Add Real-Time Scraping Behavior
+
+For “real-time” collection:
+
+run scraper periodically
+compare new results
+store updates
+
+Example using scheduler:
+
+Install:
+
+pip install schedule
+
+Code:
+
+import schedule
+import time
+
+def scrape():
+    print("Scraping latest books...")
+
+schedule.every(10).minutes.do(scrape)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
+12. Add Error Handling
+
+Always use:
+
+try:
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+except requests.exceptions.RequestException as e:
+    print(f"Request failed: {e}")
+13. Add User-Agent Headers
+
+Some sites block bots.
+
+Use:
+
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+response = requests.get(url, headers=headers)
+14. Final Production Structure
+
+Recommended structure:
+
+book_scraper/
+│
+├── scraper.py
+├── utils.py
+├── requirements.txt
+├── data/
+│   └── books.csv
+└── logs/
+
+Generate requirements:
+
+pip freeze > requirements.txt
+15. Example Final Output
+title,price,availability,rating,description
+A Light in the Attic,£51.77,In stock,3,...
+Tipping the Velvet,£53.74,In stock,1,...
