@@ -1,0 +1,105 @@
+STEP 0 — Load This Dataset Correctly
+
+Your dataset is semicolon-separated, so:
+
+import pandas as pd
+
+df = pd.read_csv("facebook_data.csv", sep=";")
+
+Check:
+
+print(df.head())
+print(df.columns)
+CLEAN COLUMN NAMES (IMPORTANT)
+
+Sometimes spaces cause issues:
+
+df.columns = df.columns.str.strip()
+(a) Create Data Subsets for Type of Post
+
+Your Type column has values like:
+
+Photo
+Status
+Video (if present)
+Create subsets:
+photo_df = df[df['Type'] == 'Photo']
+status_df = df[df['Type'] == 'Status']
+video_df = df[df['Type'] == 'Video']   # may be empty if not present
+
+Check:
+
+print(photo_df.shape)
+print(status_df.shape)
+(b) Merge Two Subsets
+
+Example: merge Photo + Status
+
+merged_df = pd.concat([photo_df, status_df])
+
+Verify:
+
+merged_df['Type'].value_counts()
+(c) Sort Data on Page Total Likes
+
+Sort ascending:
+
+sorted_df = df.sort_values(by='Page total likes')
+
+Descending:
+
+sorted_df_desc = df.sort_values(by='Page total likes', ascending=False)
+
+View:
+
+sorted_df.head()
+(d) Transposing Data
+
+Transpose first 5 rows:
+
+transposed_df = df.head().T
+
+Display:
+
+print(transposed_df)
+
+👉 This swaps rows and columns.
+
+(e) Melting Data to Long Format
+
+We convert multiple metric columns into a single column.
+
+Example melt:
+melted_df = pd.melt(
+    df,
+    id_vars=['Type', 'Page total likes'],
+    value_vars=[
+        'like',
+        'share',
+        'comment',
+        'Total Interactions'
+    ],
+    var_name='Metric',
+    value_name='Value'
+)
+
+Check:
+
+print(melted_df.head())
+(f) Casting Data to Wide Format
+
+Now convert melted data back using pivot:
+
+wide_df = melted_df.pivot_table(
+    index=['Type', 'Page total likes'],
+    columns='Metric',
+    values='Value'
+).reset_index()
+
+Fix column formatting:
+
+wide_df.columns.name = None
+
+View:
+
+print(wide_df.head())

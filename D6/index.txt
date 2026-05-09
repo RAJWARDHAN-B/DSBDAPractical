@@ -1,0 +1,227 @@
+Flight Information System using HBase + HiveQL (Cloudera VM)
+
+This guide shows how to implement:
+
+Create HBase Flight table
+Perform Create / Drop / Alter operations
+Connect HBase with Hive external table
+Query delays using HiveQL
+Create index on flight table
+
+This works perfectly in Cloudera VM pseudo-distributed mode.
+
+Project Architecture
+CSV Flight Data
+      |
+      v
++-------------+
+|   HBase     |
+| FlightInfo  |
++-------------+
+      |
+      v
++-------------+
+| Hive External|
+|    Table     |
++-------------+
+      |
+      v
+HiveQL Queries
+(Total Delay, Avg Delay, Index)
+STEP 1 — Start Hadoop, HBase, and Hive
+
+Start Hadoop:
+
+start-dfs.sh
+start-yarn.sh
+
+Start HBase:
+
+start-hbase.sh
+
+Check services:
+
+jps
+
+Expected:
+
+NameNode
+DataNode
+NodeManager
+ResourceManager
+HMaster
+HRegionServer
+STEP 2 — Create Flight Dataset
+
+Create project directory:
+
+mkdir ~/flightproject
+cd ~/flightproject
+
+Create CSV file:
+
+nano flights.csv
+
+Paste sample data:
+
+1,AirIndia,Delhi,Mumbai,08:00,08:30,30
+2,Indigo,Chennai,Bangalore,09:00,09:20,20
+3,SpiceJet,Hyderabad,Pune,10:00,10:50,50
+4,Vistara,Kolkata,Delhi,11:00,11:10,10
+5,AirAsia,Mumbai,Goa,12:00,12:45,45
+
+Format:
+
+FlightID,Airline,Source,Destination,ScheduledTime,ActualTime,Delay
+
+Save file.
+
+STEP 3 — Open HBase Shell
+hbase shell
+STEP 4 — Create FlightInfo HBase Table
+Create table
+create 'FlightInfo',
+       'flight',
+       'schedule',
+       'delay'
+
+Explanation:
+
+Column Family	Purpose
+flight	flight details
+schedule	timing info
+delay	delay info
+STEP 5 — Insert Data into HBase
+
+Insert records:
+
+put 'FlightInfo','1','flight:airline','AirIndia'
+put 'FlightInfo','1','flight:source','Delhi'
+put 'FlightInfo','1','flight:destination','Mumbai'
+put 'FlightInfo','1','schedule:scheduled','08:00'
+put 'FlightInfo','1','schedule:actual','08:30'
+put 'FlightInfo','1','delay:minutes','30'
+
+Add more rows similarly:
+
+put 'FlightInfo','2','flight:airline','Indigo'
+put 'FlightInfo','2','flight:source','Chennai'
+put 'FlightInfo','2','flight:destination','Bangalore'
+put 'FlightInfo','2','schedule:scheduled','09:00'
+put 'FlightInfo','2','schedule:actual','09:20'
+put 'FlightInfo','2','delay:minutes','20'
+
+Continue for all flights.
+
+STEP 6 — View Data
+scan 'FlightInfo'
+STEP 7 — Demonstrate Create / Alter / Drop
+A. Describe Table
+describe 'FlightInfo'
+B. Alter Table
+
+Add new column family:
+
+alter 'FlightInfo', NAME => 'status'
+
+Verify:
+
+describe 'FlightInfo'
+C. Disable Table
+disable 'FlightInfo'
+D. Enable Table
+enable 'FlightInfo'
+E. Drop Table
+disable 'FlightInfo'
+drop 'FlightInfo'
+
+Recreate afterward if needed.
+
+STEP 8 — Start Hive
+
+Exit HBase shell:
+
+exit
+
+Open Hive:
+
+hive
+STEP 9 — Create Hive Database
+CREATE DATABASE flightdb;
+
+Use database:
+
+USE flightdb;
+
+Show databases:
+
+SHOW DATABASES;
+STEP 10 — Create External Hive Table Connected to HBase
+CREATE EXTERNAL TABLE flight_hive(
+    flightid STRING,
+    airline STRING,
+    source STRING,
+    destination STRING,
+    scheduled STRING,
+    actual STRING,
+    delay INT
+)
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES (
+    "hbase.columns.mapping" =
+    ":key,
+     flight:airline,
+     flight:source,
+     flight:destination,
+     schedule:scheduled,
+     schedule:actual,
+     delay:minutes"
+)
+TBLPROPERTIES (
+    "hbase.table.name" = "FlightInfo"
+);
+STEP 11 — View Hive Table Data
+SELECT * FROM flight_hive;
+
+Expected output:
+
+1 AirIndia Delhi Mumbai 08:00 08:30 30
+2 Indigo Chennai Bangalore 09:00 09:20 20
+STEP 12 — Find Total Departure Delay
+SELECT SUM(delay) AS total_delay
+FROM flight_hive;
+
+Expected:
+
+155
+STEP 13 — Find Average Departure Delay
+SELECT AVG(delay) AS average_delay
+FROM flight_hive;
+
+Expected:
+
+31.0
+STEP 14 — Create Index on Flight Table
+CREATE INDEX idx_airline
+ON TABLE flight_hive(airline)
+AS 'COMPACT'
+WITH DEFERRED REBUILD;
+
+Build index:
+
+ALTER INDEX idx_airline
+ON flight_hive
+REBUILD;
+
+Show indexes:
+
+SHOW INDEXES ON flight_hive;
+STEP 15 — Important Commands
+Show HBase Tables
+list
+Delete Specific Row
+deleteall 'FlightInfo','1'
+Count Records
+count 'FlightInfo'
+Exit Hive
+exit;
