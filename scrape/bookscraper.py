@@ -1,3 +1,11 @@
+# python -m venv venv
+# Windows
+# venv\Scripts\activate
+# Mac/Linux
+# source venv/bin/activate
+
+# pip install requests beautifulsoup4 pandas lxml
+
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
