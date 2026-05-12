@@ -1,0 +1,105 @@
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+public class MaxLoginDuration {
+
+    // =========================
+    // MAPPER CLASS
+    // =========================
+    public static class LoginMapper
+            extends Mapper<LongWritable, Text, Text, LongWritable> {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm");
+
+        public void map(LongWritable key, Text value, Context context)
+                throws IOException, InterruptedException {
+
+            try {
+                String[] parts = value.toString().split("\t");
+
+                String user = parts[0];
+                String loginTime = parts[5];
+                String logoutTime = parts[7];
+
+                Date login = sdf.parse(loginTime);
+                Date logout = sdf.parse(logoutTime);
+
+                long duration = (logout.getTime() - login.getTime()) / (60 * 1000); // minutes
+
+                context.write(new Text(user), new LongWritable(duration));
+
+            } catch (Exception e) {
+                // ignore bad records
+            }
+        }
+    }
+
+    // =========================
+    // REDUCER CLASS
+    // =========================
+    public static class LoginReducer
+            extends Reducer<Text, LongWritable, Text, LongWritable> {
+
+        private Text maxUser = new Text();
+        private long maxDuration = 0;
+
+        public void reduce(Text key, Iterable<LongWritable> values, Context context)
+                throws IOException, InterruptedException {
+
+            long sum = 0;
+
+            for (LongWritable val : values) {
+                sum += val.get();
+            }
+
+            // track maximum user
+            if (sum > maxDuration) {
+                maxDuration = sum;
+                maxUser.set(key);
+            }
+        }
+
+        // write final result once
+        protected void cleanup(Context context)
+                throws IOException, InterruptedException {
+
+            context.write(maxUser, new LongWritable(maxDuration));
+        }
+    }
+
+    // =========================
+    // DRIVER CLASS
+    // =========================
+    public static void main(String[] args) throws Exception {
+
+        Configuration conf = new Configuration();
+        Job job = Job.getInstance(conf, "Max Login Duration");
+
+        job.setJarByClass(MaxLoginDuration.class);
+
+        job.setMapperClass(LoginMapper.class);
+        job.setReducerClass(LoginReducer.class);
+
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(LongWritable.class);
+
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+}
