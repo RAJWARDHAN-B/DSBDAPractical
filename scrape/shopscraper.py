@@ -38,8 +38,10 @@ for product in products:
     price = product.find("span", itemprop="price")
     description = product.find("p", class_="description")
 
-    rating_tag = product.find("p", attrs={"data-rating": True})
-    rating = rating_tag["data-rating"]
+    # rating_tag = product.find("p", attrs={"data-rating": True})
+    peas = product.find_all("p")
+    rating = peas[1]["data-rating"]
+    # rating = rating_tag["data-rating"]
     review_count = product.find("span", itemprop="reviewCount")
 
     data.append({
