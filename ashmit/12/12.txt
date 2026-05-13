@@ -1,0 +1,87 @@
+import pandas as pd
+
+col_names = [
+    "age",
+    "workclass",
+    "fnlwgt",
+    "education",
+    "education_num",
+    "marital_status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "capital_gain",
+    "capital_loss",
+    "hours_per_week",
+    "native_country",
+    "income"
+]
+
+data = pd.read_csv(
+    "adult.csv",
+    names=col_names
+)
+
+data.head()
+
+# s. Create data subsets for different Country, Sex, Race
+
+india_data = data[data["native_country"] == "India"]
+
+male_data = data[data["sex"] == "Male"]
+
+white_race = data[data["race"] == "White"]
+
+india_data.head()
+
+male_data.head()
+
+white_race.head()
+
+# t. Merge two subsets
+
+merged_data = pd.concat([india_data, male_data])
+
+merged_data.head()
+
+# u. Sort Data using hours per week
+
+sorted_data = merged_data.sort_values(
+    by="hours_per_week",
+    ascending=False
+)
+
+sorted_data.head()
+
+# v. Transposing Data
+
+transposed_data = sorted_data.T
+
+transposed_data.head()
+
+# w. Melting Data to long format
+
+melted_data = pd.melt(
+    data,
+    id_vars=["sex"],
+    value_vars=[
+        "age",
+        "education_num",
+        "capital_gain",
+        "hours_per_week"
+    ]
+)
+
+melted_data.head()
+
+# x. Casting data to wide format
+
+casted_data = melted_data.pivot_table(
+    index="sex",
+    columns="variable",
+    values="value",
+    aggfunc="mean"
+)
+
+casted_data.head()

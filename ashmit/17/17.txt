@@ -1,0 +1,71 @@
+import pandas as pd
+import numpy as np
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+column_names = [
+    'age', 'sex', 'cp', 'trestbps', 'chol',
+    'fbs', 'restecg', 'thalach',
+    'exang', 'oldpeak', 'slope',
+    'ca', 'thal', 'target'
+]
+
+df = pd.read_csv("Cleavland.csv", header=None, names=column_names)
+df.head()
+
+df.replace('?',np.nan,inplace=True)
+
+numeric_cols = [
+    'age', 'trestbps', 'chol',
+    'thalach', 'oldpeak',
+    'ca', 'thal', 'target'
+]
+
+df[numeric_cols]=df[numeric_cols].apply(pd.to_numeric)
+
+df[numeric_cols]=df[numeric_cols].fillna(df[numeric_cols].mean())
+
+# histogram
+plt.hist(df['age'],bins=15,edgecolor='black')
+plt.title("Histogram of Age")
+plt.xlabel("Age")
+plt.ylabel("Count")
+plt.show()
+
+# dot Plot
+sns.stripplot(x=df['target'],y=df['age'])
+plt.title("Dot Plot: Target vs Age")
+plt.show()
+
+# bar plot
+df['sex'].value_counts().plot(kind='bar')
+
+plt.title("Bar Plot of Sex")
+plt.xlabel("0 = Female, 1 = Male")
+plt.ylabel("Count")
+
+plt.show()
+
+# line chart
+df = df.sort_values('age')
+
+plt.plot(df['age'], df['thalach'])
+
+plt.title("Line Chart: Age vs Thalach")
+plt.xlabel("Age")
+plt.ylabel("Maximum Heart Rate")
+
+plt.show()
+
+# join histogram and scatter plot
+sns.jointplot(data=df, x='age', y='chol', kind='scatter')
+
+plt.show()
+
+# box plot
+sns.boxplot(x=df['chol'])
+
+plt.title("Box Plot of Cholesterol")
+
+plt.show()

@@ -1,0 +1,27 @@
+import requests
+import pandas as pd
+
+URL="https://store.steampowered.com/appreviews/730?json=1"
+
+data=requests.get(URL).json()
+print(data)
+
+rows=[]
+for r in data['reviews']:
+  rows.append({
+      "Customer Name" : r["author"]["steamid"],
+      
+      "Rating": "Recommended" if r["voted_up"] else "Not Recommended",
+      
+      "Comment": r["review"],
+      
+      "Tags": "Verified Purchase" if r["steam_purchase"] else "Not Verified",
+      
+      "Helpful Votes": r["votes_up"]
+  })
+
+df=pd.DataFrame(rows)
+
+df.head()
+
+df.size

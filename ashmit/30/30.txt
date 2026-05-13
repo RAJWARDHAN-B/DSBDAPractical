@@ -1,0 +1,47 @@
+import requests
+import pandas as pd
+from bs4 import BeautifulSoup
+
+URL="https://books.toscrape.com/"
+
+data=requests.get(URL).text
+
+print(data)
+
+soup=BeautifulSoup(data,'html.parser')
+
+rows=[]
+
+books=soup.find_all('article',class_='product_pod')
+
+for r in books:
+
+  name=r.h3.a['title']
+
+  rating=r.p['class'][1]
+
+  comment=r.find('p',class_='price_color').text.strip()
+
+  tags=r.find('p',class_='instock availability').text.strip()
+
+  reviews="Book Available"
+
+  rows.append({
+
+      "Customer Name" : name,
+
+      "Rating" : rating,
+
+      "Comment" : comment,
+
+      "Tags" : tags,
+
+      "Helpful Votes" : reviews
+
+  })
+
+df=pd.DataFrame(rows)
+
+df.head()
+
+df.size

@@ -1,0 +1,115 @@
+sudo service hadoop-hdfs-namenode start
+
+sudo service hadoop-yarn-resourcemanager start
+
+sudo service hbase-master start
+
+sudo service hbase-regionserver start
+
+jps
+
+hbase shell
+
+create 'retail','rinfo','sales'
+
+put 'retail',1,'rinfo:customer_name','Ashmit'
+put 'retail',1,'rinfo:country','India'
+put 'retail',1,'sales:product','Laptop'
+put 'retail',1,'sales:quantity','2'
+put 'retail',1,'sales:price','50000'
+put 'retail',1,'sales:total','100000'
+
+put 'retail',2,'rinfo:customer_name','Rahul'
+put 'retail',2,'rinfo:country','USA'
+put 'retail',2,'sales:product','Mobile'
+put 'retail',2,'sales:quantity','3'
+put 'retail',2,'sales:price','20000'
+put 'retail',2,'sales:total','60000'
+
+put 'retail',3,'rinfo:customer_name','Priya'
+put 'retail',3,'rinfo:country','UK'
+put 'retail',3,'sales:product','Tablet'
+put 'retail',3,'sales:quantity','1'
+put 'retail',3,'sales:price','30000'
+put 'retail',3,'sales:total','30000'
+
+scan 'retail'
+
+get 'retail','1'
+
+alter 'retail', NAME=>'discount'
+
+describe 'retail'
+
+scan 'retail'
+
+exit
+
+hive
+
+create table online_retail(
+id int,
+customer_name string,
+country string,
+product string,
+quantity int,
+price int,
+total int)
+row format delimited
+fields terminated by ',';
+
+load data local inpath '/home/cloudera/online_retail.txt'
+into table online_retail;
+
+select * from online_retail;
+
+create index retail_index
+on table online_retail(product)
+as 'org.apache.hadoop.hive.ql.index.compact.CompactIndexHandler'
+with deferred rebuild;
+
+show index on online_retail;
+
+select sum(total) as total_sales
+from online_retail;
+
+select avg(total) as average_sales
+from online_retail;
+
+select *
+from online_retail
+order by total desc
+limit 1;
+
+select customer_name,sum(total) as order_total
+from online_retail
+group by customer_name
+order by order_total desc
+limit 1;
+
+select country,sum(total) as total_sales
+from online_retail
+group by country
+order by total_sales desc
+limit 1;
+
+select country,sum(total) as total_sales
+from online_retail
+group by country
+order by total_sales asc
+limit 1;
+
+create external table hbase_retail(
+id int,
+customer_name string,
+country string,
+product string,
+quantity int,
+price int,
+total int)
+stored by 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+with serdeproperties(
+"hbase.columns.mapping"=":key,rinfo:customer_name,rinfo:country,sales:product,sales:quantity,sales:price,sales:total")
+tblproperties("hbase.table.name"="retail");
+
+select * from hbase_retail;

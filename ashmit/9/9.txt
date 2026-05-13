@@ -1,0 +1,59 @@
+import pandas as pd
+
+data = pd.read_csv("dataset_Facebook.csv", sep=";")
+
+data.head()
+
+data.size
+
+# a. Create data subsets for type of post
+
+photo_posts = data[data["Type"] == "Photo"]
+
+status_posts = data[data["Type"] == "Status"]
+
+photo_posts.head()
+
+status_posts.head()
+
+# b. Merge two subsets
+
+merged_data = pd.concat([photo_posts, status_posts])
+
+merged_data.head()
+
+# c. Sort Data on Page total likes
+
+sorted_data = merged_data.sort_values(
+    by="Page total likes",
+    ascending=False
+)
+
+sorted_data.head()
+
+# d. Transposing Data
+
+transposed_data = sorted_data.T
+
+transposed_data.head()
+
+# e. Melting Data to long format
+
+melted_data = pd.melt(
+    data,
+    id_vars=["Type", "Category"],
+    value_vars=["comment", "like", "share"]
+)
+
+melted_data.head(10)
+
+# f. Casting Data to wide format
+
+casted_data = melted_data.pivot_table(
+    index=["Type", "Category"],
+    columns="variable",
+    values="value",
+    aggfunc="sum"
+)
+
+casted_data.head()

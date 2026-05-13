@@ -1,0 +1,70 @@
+sudo service hadoop-hdfs-namenode start
+
+sudo service hadoop-yarn-resourcemanager start
+
+sudo service hbase-master start
+
+sudo service hbase-regionserver start
+
+jps
+
+hbase shell
+
+create 'flight','finfo','fsch'
+
+put 'flight',1,'finfo:source','mumbai'
+
+put 'flight',1,'finfo:dest','Pune'
+
+put 'flight',1,'fsch:delay',30
+
+put 'flight',2,'finfo:source','Delhi'
+
+put 'flight',2,'finfo:dest','Barmati'
+
+put 'flight',2,'fsch:delay',60
+
+scan 'flight'
+
+get 'flight','1'
+
+alter 'flight', NAME=>'revenue'
+
+scan 'flight'
+
+delete 'flight',1,'fsch:delay'
+
+scan 'flight'
+
+describe 'flight'
+
+put 'flight',1,'fsch:delay',30
+
+scan 'flight'
+
+exit
+
+hive
+
+create external table hbase_flight(
+id int,
+source string,
+dest string,
+delay int)
+stored by 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+with serdeproperties(
+"hbase.columns.mapping"=":key,finfo:source,finfo:dest,fsch:delay")
+tblproperties("hbase.table.name"="flight");
+
+select * from hbase_flight;
+
+select sum(delay) as delay from hbase_flight;
+
+select avg(delay) from hbase_flight;
+
+create index flight_index
+on table hbase_flight(delay)
+as 'org.apache.hadoop.hive.ql.index.compact.CompactIndexHandler'
+with deferred rebuild;
+
+show index on hbase_flight;

@@ -1,0 +1,83 @@
+import pandas as pd
+import numpy as np
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+column_names = [
+    'age', 'workclass', 'fnlwgt', 'education',
+    'education-num', 'marital-status', 'occupation',
+    'relationship', 'race', 'sex',
+    'capital-gain', 'capital-loss',
+    'hours-per-week', 'native-country', 'income'
+]
+
+df = pd.read_csv("adult.csv", header=None, names=column_names)
+df.head()
+
+df.replace('?',np.nan,inplace=True)
+
+numeric_cols = [
+    'age', 'fnlwgt', 'education-num',
+    'capital-gain', 'capital-loss',
+    'hours-per-week'
+]
+
+df[numeric_cols]=df[numeric_cols].apply(pd.to_numeric)
+
+df[numeric_cols]=df[numeric_cols].fillna(df[numeric_cols].mean())
+
+# histogram
+# Objective: Show distribution of age
+
+plt.hist(df['age'],bins=15,edgecolor='black')
+
+plt.title("Histogram of Age")
+plt.xlabel("Age")
+plt.ylabel("Count")
+
+plt.show()
+
+# pie chart
+# Objective: Show percentage of male and female population
+
+df['sex'].value_counts().plot(
+    kind='pie',
+    autopct='%1.1f%%'
+)
+
+plt.title("Pie Chart of Sex")
+
+plt.show()
+
+# box plot
+# Objective: Detect spread and outliers in hours worked per week
+
+sns.boxplot(x=df['hours-per-week'])
+
+plt.title("Box Plot of Hours Per Week")
+
+plt.show()
+
+# scatter plot
+# Objective: Show relationship between age and hours worked per week
+
+plt.scatter(df['age'],df['hours-per-week'])
+
+plt.title("Scatter Plot: Age vs Hours Per Week")
+plt.xlabel("Age")
+plt.ylabel("Hours Per Week")
+
+plt.show()
+
+# scatter plot with boxplots
+# Objective: Combine scatter plot and boxplots for better analysis
+
+sns.jointplot(
+    data=df,
+    x='age',
+    y='hours-per-week',
+    kind='scatter'
+)
+
+plt.show()

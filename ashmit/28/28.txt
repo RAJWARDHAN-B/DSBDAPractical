@@ -1,0 +1,47 @@
+import requests
+import pandas as pd
+from bs4 import BeautifulSoup
+
+URL="https://webscraper.io/test-sites/e-commerce/static"
+
+data=requests.get(URL).text
+
+print(data)
+
+soup=BeautifulSoup(data,'html.parser')
+
+rows=[]
+
+products=soup.find_all('div',class_='thumbnail')
+
+for r in products:
+
+  name=r.find('a',class_='title').text.strip()
+
+  reviews=r.find('p',class_='pull-right').text.strip()
+
+  rating=len(r.find_all('span',class_='glyphicon glyphicon-star'))
+
+  comment=r.find('p',class_='description').text.strip()
+
+  tags=r.find('h4',class_='pull-right price').text.strip()
+
+  rows.append({
+
+      "Customer Name" : name,
+
+      "Rating" : rating,
+
+      "Comment" : comment,
+
+      "Tags" : tags,
+
+      "Helpful Votes" : reviews
+
+  })
+
+df=pd.DataFrame(rows)
+
+df.head()
+
+df.size

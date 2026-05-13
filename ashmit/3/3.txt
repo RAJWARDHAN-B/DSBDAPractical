@@ -1,0 +1,345 @@
+HADOOP MAPREDUCE SETUP AND EXECUTION STEPS
+(CLOUDERA + ECLIPSE)
+==================================================
+
+Make sure these services are running:
+
+* NameNode
+* DataNode
+* SecondaryNameNode
+* ResourceManager
+* NodeManager
+* JobHistoryServer
+
+(Optional depending on practical)
+
+* HBase
+* ZooKeeper
+* HMaster
+* HRegionServer
+
+========================================================
+2. CREATE JAVA PROJECT IN ECLIPSE
+=================================
+
+Open Eclipse
+
+File
+→ New
+→ Java Project
+
+Project Name:
+
+DSBDAL
+
+Click Finish
+
+========================================================
+3. CREATE PACKAGE
+=================
+
+Inside src:
+
+Right Click src
+→ New
+→ Package
+
+Example Package Names:
+
+p1_dsbdal
+p2_dsbdal
+p3_dsbdal
+
+========================================================
+4. CREATE JAVA FILES
+====================
+
+Inside package create:
+
+* Mapper Class
+* Reducer Class
+* Driver Class
+
+Example:
+
+WordMapper.java
+WordReducer.java
+WordDriver.java
+
+========================================================
+5. ADD HADOOP JARS
+==================
+
+Right Click Project
+→ Build Path
+→ Configure Build Path
+
+Libraries
+→ Add External JARs
+
+Go to:
+
+/usr/lib/hadoop/client
+
+Select ALL jars using CTRL + A
+
+Click:
+OK
+Apply
+Apply and Close
+
+========================================================
+6. PASTE JAVA CODE
+==================
+
+Paste:
+
+* Mapper code
+* Reducer code
+* Driver code
+
+Save files using:
+
+Ctrl + S
+
+========================================================
+7. ENABLE SHARED FOLDER IN VIRTUALBOX
+=====================================
+
+VirtualBox
+→ Settings
+→ Shared Folders
+
+Add Folder from laptop
+
+Enable:
+✓ Auto Mount
+✓ Make Permanent
+
+Restart VM
+
+========================================================
+8. FIX SHARED FOLDER PERMISSION
+===============================
+
+Run:
+
+sudo usermod -aG vboxsf cloudera
+
+Then reboot:
+
+sudo reboot
+
+========================================================
+9. ACCESS SHARED FOLDER
+=======================
+
+Open terminal:
+
+cd /media
+ls
+
+Open shared folder:
+
+cd /media/sf_FOLDERNAME
+
+Check files:
+
+ls
+
+========================================================
+10. CREATE WORKING DIRECTORY (in /home/cloudera)
+============================
+
+mkdir ~/dsbdal
+
+========================================================
+11. COPY INPUT FILE
+===================
+
+Example:
+
+cp "/media/sf_FOLDERNAME/filename.csv" ~/dsbdal/
+
+========================================================
+12. RENAME FILE (RECOMMENDED)
+=============================
+
+Avoid:
+
+* spaces
+* brackets
+* special characters
+
+Example:
+
+mv ~/dsbdal/file\ (1).csv ~/dsbdal/input.csv
+
+Verify:
+
+ls ~/dsbdal
+
+========================================================
+13. CREATE HDFS INPUT DIRECTORY
+===============================
+
+hdfs dfs -mkdir /input1
+
+========================================================
+14. UPLOAD FILE TO HDFS
+=======================
+
+hdfs dfs -put ~/dsbdal/input.csv /input1
+
+========================================================
+15. VERIFY HDFS FILE
+====================
+
+hdfs dfs -ls /input1
+
+========================================================
+16. EXPORT JAR FILE FROM ECLIPSE
+================================
+
+Right Click Project
+→ Export
+→ Java
+→ JAR File
+
+Save as:
+
+/home/cloudera/dsbdal/program.jar
+
+Click:
+Next
+Next
+Finish
+
+========================================================
+17. VERIFY JAR FILE
+===================
+
+ls ~/dsbdal
+
+You should see:
+
+* program.jar
+* input.csv
+
+========================================================
+18. RUN MAPREDUCE PROGRAM
+=========================
+
+Syntax:
+
+hadoop jar JARFILE DRIVERCLASS INPUTFOLDER OUTPUTFOLDER
+
+Example:
+
+hadoop jar ~/dsbdal/program.jar p1_dsbdal.WordDriver /input1 /output1
+
+========================================================
+19. CHECK OUTPUT
+================
+
+hdfs dfs -cat /output1/part-r-00000
+
+========================================================
+20. IF OUTPUT DIRECTORY ALREADY EXISTS
+======================================
+
+Delete old output folder:
+
+hdfs dfs -rm -r /output1
+
+Then rerun program.
+
+========================================================
+21. AFTER CODE CHANGES
+======================
+
+Workflow:
+
+1. Modify Java code
+2. Save code
+3. Export JAR again
+4. Delete old output folder
+5. Run Hadoop job again
+
+========================================================
+22. IMPORTANT COMMANDS SUMMARY
+==============================
+
+Delete Output Folder:
+hdfs dfs -rm -r /output1
+
+Check HDFS Files:
+hdfs dfs -ls /input1
+
+Check Output:
+hdfs dfs -cat /output1/part-r-00000
+
+Run Job:
+hadoop jar ~/dsbdal/program.jar package.DriverClass /input1 /output1
+
+Upload File:
+hdfs dfs -put ~/dsbdal/input.csv /input1
+
+========================================================
+23. RECOMMENDED PROJECT STRUCTURE
+=================================
+
+DSBDAL
+│
+├── p1_dsbdal
+├── p2_dsbdal
+├── p3_dsbdal
+├── p4_dsbdal
+
+Each package contains:
+
+* Mapper
+* Reducer
+* Driver
+
+========================================================
+24. COMMON ERRORS
+=================
+
+1. Output directory already exists
+   Solution:
+   hdfs dfs -rm -r /output1
+
+2. Package import errors
+   Solution:
+   Add Hadoop jars from:
+   /usr/lib/hadoop/client
+
+3. Permission denied in shared folder
+   Solution:
+   sudo usermod -aG vboxsf cloudera
+   sudo reboot
+
+4. File not found
+   Solution:
+   Check:
+   hdfs dfs -ls /input1
+
+5. Main class not found
+   Solution:
+   Export correct JAR again
+   Check Driver class name
+
+========================================================
+25. FINAL WORKFLOW
+==================
+
+Code in Eclipse
+→ Export JAR
+→ Upload Input File to HDFS
+→ Run Hadoop Job
+→ Check Output
+→ Modify Code if Needed
+→ Export Again
+→ Delete Output Folder
+→ Rerun

@@ -1,0 +1,65 @@
+import pandas as pd
+
+data = pd.read_csv("movies_metadata.csv")
+
+data.head()
+
+# m. Create data subsets for different languages
+
+english_movies = data[data["original_language"] == "en"]
+
+french_movies = data[data["original_language"] == "fr"]
+
+hindi_movies = data[data["original_language"] == "hi"]
+
+english_movies.head()
+
+french_movies.head()
+
+hindi_movies.head()
+
+# n. Merge two subsets
+
+merged_data = pd.concat([english_movies, french_movies])
+
+merged_data.head()
+
+# o. Sort Data using customer ratings
+
+sorted_data = merged_data.sort_values(
+    by="vote_average",
+    ascending=False
+)
+
+sorted_data.head()
+
+# p. Transposing Data
+
+transposed_data = sorted_data.T
+
+transposed_data.head()
+
+# q. Melting Data to long format
+
+melted_data = pd.melt(
+    data,
+    id_vars=["original_language"],
+    value_vars=[
+        "popularity",
+        "vote_average",
+        "vote_count"
+    ]
+)
+
+melted_data.head()
+
+# r. Casting data to wide format
+
+casted_data = melted_data.pivot_table(
+    index="original_language",
+    columns="variable",
+    values="value",
+    aggfunc="mean"
+)
+
+casted_data.head()

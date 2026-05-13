@@ -1,0 +1,82 @@
+import pandas as pd
+import numpy as np
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+column_names = [
+    'age', 'sex', 'cp', 'trestbps', 'chol',
+    'fbs', 'restecg', 'thalach',
+    'exang', 'oldpeak', 'slope',
+    'ca', 'thal', 'target'
+]
+
+df = pd.read_csv("Cleavland.csv", header=None, names=column_names)
+df.head()
+
+df.replace('?',np.nan,inplace=True)
+
+numeric_cols = [
+    'age', 'trestbps', 'chol',
+    'thalach', 'oldpeak',
+    'ca', 'thal', 'target'
+]
+
+df[numeric_cols]=df[numeric_cols].apply(pd.to_numeric)
+
+df[numeric_cols]=df[numeric_cols].fillna(df[numeric_cols].mean())
+
+# histogram
+# Objective: Show distribution of patient age
+
+plt.hist(df['age'],bins=15,edgecolor='black')
+
+plt.title("Histogram of Age")
+plt.xlabel("Age")
+plt.ylabel("Count")
+
+plt.show()
+
+# pie chart
+# Objective: Show percentage of male and female patients
+
+df['sex'].value_counts().plot(
+    kind='pie',
+    autopct='%1.1f%%'
+)
+
+plt.title("Pie Chart of Sex")
+
+plt.show()
+
+# box plot
+# Objective: Detect spread and outliers in cholesterol values
+
+sns.boxplot(x=df['chol'])
+
+plt.title("Box Plot of Cholesterol")
+
+plt.show()
+
+# scatter plot
+# Objective: Show relationship between age and cholesterol
+
+plt.scatter(df['age'],df['chol'])
+
+plt.title("Scatter Plot: Age vs Cholesterol")
+plt.xlabel("Age")
+plt.ylabel("Cholesterol")
+
+plt.show()
+
+# scatter plot with boxplots
+# Objective: Combine scatter plot and boxplots for better analysis
+
+sns.jointplot(
+    data=df,
+    x='age',
+    y='chol',
+    kind='scatter'
+)
+
+plt.show()

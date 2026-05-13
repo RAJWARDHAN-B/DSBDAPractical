@@ -1,0 +1,93 @@
+import pandas as pd
+import numpy as np
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+column_names = [
+    'age', 'workclass', 'fnlwgt', 'education',
+    'education-num', 'marital-status', 'occupation',
+    'relationship', 'race', 'sex',
+    'capital-gain', 'capital-loss',
+    'hours-per-week', 'native-country', 'income'
+]
+
+df = pd.read_csv("adult.csv", header=None, names=column_names)
+df.head()
+
+df.replace('?',np.nan,inplace=True)
+
+numeric_cols = [
+    'age', 'fnlwgt', 'education-num',
+    'capital-gain', 'capital-loss',
+    'hours-per-week'
+]
+
+df[numeric_cols]=df[numeric_cols].apply(pd.to_numeric)
+
+df[numeric_cols]=df[numeric_cols].fillna(df[numeric_cols].mean())
+
+# histogram
+# Objective: Show distribution of age
+
+plt.hist(df['age'],bins=15,edgecolor='black')
+
+plt.title("Histogram of Age")
+plt.xlabel("Age")
+plt.ylabel("Count")
+
+plt.show()
+
+# dot plot
+# Objective: Show relationship between income and age
+
+sns.stripplot(x=df['income'],y=df['age'])
+
+plt.title("Dot Plot: Income vs Age")
+
+plt.show()
+
+# bar plot
+# Objective: Compare male and female count
+
+df['sex'].value_counts().plot(kind='bar')
+
+plt.title("Bar Plot of Sex")
+plt.xlabel("Gender")
+plt.ylabel("Count")
+
+plt.show()
+
+# line chart
+# Objective: Show relation between age and hours worked per week
+
+df = df.sort_values('age')
+
+plt.plot(df['age'], df['hours-per-week'])
+
+plt.title("Line Chart: Age vs Hours Per Week")
+plt.xlabel("Age")
+plt.ylabel("Hours Per Week")
+
+plt.show()
+
+# histogram and scatter plot together
+# Objective: Show relationship between age and hours worked
+
+sns.jointplot(
+    data=df,
+    x='age',
+    y='hours-per-week',
+    kind='scatter'
+)
+
+plt.show()
+
+# box plot
+# Objective: Detect spread and outliers in hours worked per week
+
+sns.boxplot(x=df['hours-per-week'])
+
+plt.title("Box Plot of Hours Per Week")
+
+plt.show()

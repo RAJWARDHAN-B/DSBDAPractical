@@ -1,0 +1,125 @@
+sudo service hadoop-hdfs-namenode start
+
+sudo service hadoop-yarn-resourcemanager start
+
+sudo service hbase-master start
+
+sudo service hbase-regionserver start
+
+jps
+
+hbase shell
+
+create 'customer','cinfo','oinfo','iinfo'
+
+put 'customer',1,'cinfo:cust_name','Ashmit'
+put 'customer',1,'cinfo:order_id','101'
+put 'customer',1,'oinfo:item_id','501'
+put 'customer',1,'oinfo:quantity','2'
+put 'customer',1,'iinfo:item_name','Laptop'
+put 'customer',1,'iinfo:item_price','50000'
+
+put 'customer',2,'cinfo:cust_name','Rahul'
+put 'customer',2,'cinfo:order_id','102'
+put 'customer',2,'oinfo:item_id','502'
+put 'customer',2,'oinfo:quantity','3'
+put 'customer',2,'iinfo:item_name','Mobile'
+put 'customer',2,'iinfo:item_price','20000'
+
+scan 'customer'
+
+get 'customer','1'
+
+alter 'customer', NAME=>'payment'
+
+describe 'customer'
+
+scan 'customer'
+
+exit
+
+hive
+
+create table customer_info(
+cust_id int,
+cust_name string,
+order_id int)
+row format delimited
+fields terminated by ',';
+
+create table order_info(
+order_id int,
+item_id int,
+quantity int)
+row format delimited
+fields terminated by ',';
+
+create table item_info(
+item_id int,
+item_name string,
+item_price int)
+row format delimited
+fields terminated by ',';
+
+load data local inpath '/home/cloudera/customer_info.txt'
+into table customer_info;
+
+load data local inpath '/home/cloudera/order_info.txt'
+into table order_info;
+
+load data local inpath '/home/cloudera/item_info.txt'
+into table item_info;
+
+select * from customer_info;
+
+select * from order_info;
+
+select * from item_info;
+
+select c.cust_name,o.order_id,i.item_name,o.quantity,i.item_price
+from customer_info c
+join order_info o
+on c.order_id=o.order_id
+join item_info i
+on o.item_id=i.item_id;
+
+create index customer_index
+on table customer_info(cust_name)
+as 'org.apache.hadoop.hive.ql.index.compact.CompactIndexHandler'
+with deferred rebuild;
+
+show index on customer_info;
+
+select sum(o.quantity*i.item_price) as total_sales
+from order_info o
+join item_info i
+on o.item_id=i.item_id;
+
+select avg(o.quantity*i.item_price) as average_sales
+from order_info o
+join item_info i
+on o.item_id=i.item_id;
+
+select c.cust_name,o.order_id,(o.quantity*i.item_price) as total_cost
+from customer_info c
+join order_info o
+on c.order_id=o.order_id
+join item_info i
+on o.item_id=i.item_id
+order by total_cost desc
+limit 1;
+
+create external table hbase_customer(
+cust_id int,
+cust_name string,
+order_id int,
+item_id int,
+quantity int,
+item_name string,
+item_price int)
+stored by 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+with serdeproperties(
+"hbase.columns.mapping"=":key,cinfo:cust_name,cinfo:order_id,oinfo:item_id,oinfo:quantity,iinfo:item_name,iinfo:item_price")
+tblproperties("hbase.table.name"="customer");
+
+select * from hbase_customer;

@@ -1,0 +1,168 @@
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score, classification_report
+
+
+col_names = [
+    'class',
+    'age',
+    'sex',
+    'steroid',
+    'antivirals',
+    'fatigue',
+    'malaise',
+    'anorexia',
+    'liver_big',
+    'liver_firm',
+    'spleen_palpable',
+    'spiders',
+    'ascites',
+    'varices',
+    'bilirubin',
+    'alk_phosphate',
+    'sgot',
+    'albumin',
+    'protime',
+    'histology'
+]
+
+# Load Dataset
+df = pd.read_csv("hepatitis.csv", names=col_names)
+
+print("First 5 Rows:")
+print(df.head())
+
+# Check Missing Values
+print("\nMissing Values Before Cleaning:")
+print(df.isnull().sum())
+
+# Replace ? with NaN
+df.replace('?', np.nan, inplace=True)
+
+# Numeric Columns
+numeric_cols = [
+    'age',
+    'bilirubin',
+    'alk_phosphate',
+    'sgot',
+    'albumin',
+    'protime'
+]
+
+# Convert Numeric Columns
+df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric)
+
+# Fill Missing Values with Mean
+df[numeric_cols] = df[numeric_cols].fillna(
+    df[numeric_cols].mean()
+)
+
+# Fill Categorical Missing Values with Mode
+categorical_cols = [
+    'class',
+    'sex',
+    'steroid',
+    'antivirals',
+    'fatigue',
+    'malaise',
+    'anorexia',
+    'liver_big',
+    'liver_firm',
+    'spleen_palpable',
+    'spiders',
+    'ascites',
+    'varices',
+    'histology'
+]
+
+for col in categorical_cols:
+    df[col].fillna(df[col].mode()[0], inplace=True)
+
+print("\nMissing Values After Cleaning:")
+print(df.isnull().sum())
+
+# Remove Negative Values
+df = df[(df[numeric_cols] >= 0).all(axis=1)]
+
+# Outlier Detection and Removal using IQR
+Q1 = df[numeric_cols].quantile(0.25)
+Q3 = df[numeric_cols].quantile(0.75)
+
+IQR = Q3 - Q1
+
+df = df[
+    ~(
+        (
+            (df[numeric_cols] < (Q1 - (1.5 * IQR))) |
+            (df[numeric_cols] > (Q3 + (1.5 * IQR)))
+        ).any(axis=1)
+    )
+]
+
+# Label Encoding for Categorical Columns
+le = LabelEncoder()
+
+for col in categorical_cols:
+    df[col] = le.fit_transform(df[col])
+
+# Separate Input and Output
+X = df.drop('class', axis=1)
+y = df['class']
+
+# Data Transformation
+scaler = StandardScaler()
+
+X_scaled = scaler.fit_transform(X)
+
+# Train Test Split
+X_train, X_test, y_train, y_test = train_test_split(
+    X_scaled,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+# Logistic Regression Model
+lr = LogisticRegression()
+
+lr.fit(X_train, y_train)
+
+y_pred_lr = lr.predict(X_test)
+
+print("\nLogistic Regression Accuracy:")
+print(accuracy_score(y_test, y_pred_lr))
+
+print("\nClassification Report for Logistic Regression:")
+print(classification_report(y_test, y_pred_lr))
+
+# Naive Bayes Model
+nb = GaussianNB()
+
+nb.fit(X_train, y_train)
+
+y_pred_nb = nb.predict(X_test)
+
+print("\nNaive Bayes Accuracy:")
+print(accuracy_score(y_test, y_pred_nb))
+
+print("\nClassification Report for Naive Bayes:")
+print(classification_report(y_test, y_pred_nb))
+
+# Compare Accuracy
+lr_acc = accuracy_score(y_test, y_pred_lr)
+nb_acc = accuracy_score(y_test, y_pred_nb)
+
+print("\nAccuracy Comparison for DIE and LIVE Prediction:")
+
+print("Logistic Regression Accuracy:", lr_acc)
+print("Naive Bayes Accuracy:", nb_acc)
+
+if lr_acc > nb_acc:
+    print("Logistic Regression performs better for DIE and LIVE prediction")
+else:
+    print("Naive Bayes performs better for DIE and LIVE prediction")

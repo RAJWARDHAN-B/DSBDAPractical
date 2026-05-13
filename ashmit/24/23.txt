@@ -1,0 +1,69 @@
+import pandas as pd
+
+data = pd.read_csv("forestfires.csv")
+
+data.head()
+
+data.size
+
+# a. Create data subsets by making classes for amount of region affected
+
+not_affected = data[data["area"] == 0]
+
+partially_affected = data[
+    (data["area"] > 0) &
+    (data["area"] <= 50)
+]
+
+mostly_affected = data[data["area"] > 50]
+
+not_affected.head()
+
+partially_affected.head()
+
+mostly_affected.head()
+
+# b. Merge two subsets
+
+merged_data = pd.concat([
+    partially_affected,
+    mostly_affected
+])
+
+merged_data.head()
+
+# c. Sort Data using Temperature, wind and area
+
+sorted_data = merged_data.sort_values(
+    by=["temp", "wind", "area"],
+    ascending=False
+)
+
+sorted_data.head()
+
+# d. Transposing Data
+
+transposed_data = sorted_data.T
+
+transposed_data.head()
+
+# e. Melting Data to long format
+
+melted_data = pd.melt(
+    data,
+    id_vars=["month", "day"],
+    value_vars=["temp", "wind", "area"]
+)
+
+melted_data.head(10)
+
+# f. Casting data to wide format
+
+casted_data = melted_data.pivot_table(
+    index=["month", "day"],
+    columns="variable",
+    values="value",
+    aggfunc="mean"
+)
+
+casted_data.head()

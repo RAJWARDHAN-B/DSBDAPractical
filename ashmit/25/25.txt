@@ -1,0 +1,92 @@
+import pandas as pd
+
+col_names = [
+    "Class",
+    "Age",
+    "Sex",
+    "Steroid",
+    "Antivirals",
+    "Fatigue",
+    "Malaise",
+    "Anorexia",
+    "LiverBig",
+    "LiverFirm",
+    "SpleenPalpable",
+    "Spiders",
+    "Ascites",
+    "Varices",
+    "Bilirubin",
+    "AlkPhosphate",
+    "SGOT",
+    "Albumin",
+    "Protime",
+    "Histology"
+]
+
+data = pd.read_csv(
+    "hepatitis.csv",
+    names=col_names
+)
+
+data.head()
+
+data.size
+
+# a. Create data subsets for different sex
+
+male_data = data[data["Sex"] == 1]
+
+female_data = data[data["Sex"] == 2]
+
+male_data.head()
+
+female_data.head()
+
+# b. Merge two subsets
+
+merged_data = pd.concat([
+    male_data,
+    female_data
+])
+
+merged_data.head()
+
+# c. Sort Data using Age, SGOT, PROTIME
+
+sorted_data = merged_data.sort_values(
+    by=["Age", "SGOT", "Protime"],
+    ascending=False
+)
+
+sorted_data.head()
+
+# d. Transposing Data
+
+transposed_data = sorted_data.T
+
+transposed_data.head()
+
+# e. Melting Data to long format
+
+melted_data = pd.melt(
+    data,
+    id_vars=["Sex"],
+    value_vars=[
+        "Age",
+        "SGOT",
+        "Protime"
+    ]
+)
+
+melted_data.head(10)
+
+# f. Casting data to wide format
+
+casted_data = melted_data.pivot_table(
+    index="Sex",
+    columns="variable",
+    values="value",
+    aggfunc="mean"
+)
+
+casted_data.head()
